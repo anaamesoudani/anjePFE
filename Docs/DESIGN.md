@@ -1,371 +1,55 @@
-# Projet PFE : Documentation du Design (Mermaid UML)
+# Projet PFE : Documentation du Design Fonctionnel
 
-Ce document présente le design du système pour chaque sprint, incluant les diagrammes de cas d'utilisation, de séquences et de classes.
-
----
-
-## Sprint 1 : Gestion des utilisateurs
-
-### 1.1 Diagramme des cas d'utilisation
-
-```mermaid
-graph TD
-    Student[Étudiant]
-    Teacher[Enseignant]
-    Chef[Chef de Département]
-    Admin[Administrateur]
-
-    subgraph "Authentification & Profil"
-        UC1(S'inscrire - Register)
-        UC2(Se connecter - Login)
-        UC3(Consulter son profil)
-    end
-
-    subgraph "Administration des utilisateurs"
-        UC4(Lister les étudiants)
-        UC5(Gérer les utilisateurs)
-    end
-
-    Student --> UC1
-    Student --> UC2
-    Student --> UC3
-
-    Teacher --> Student
-    Teacher --> UC4
-
-    Chef --> Teacher
-    Chef --> UC5
-
-    Admin --> Chef
-```
-
-### 1.2 Diagramme de séquence (Authentification - Login)
-
-```mermaid
-sequenceDiagram
-    participant U as Utilisateur
-    participant R as Router (authRoutes)
-    participant C as AuthController
-    participant M as User Model (Mongoose)
-    participant J as JWT Utility
-
-    U->>R: POST /api/auth/login (email, password)
-    R->>C: loginUser(req, res)
-    C->>M: findOne({ email }).select('+password')
-    M-->>C: user (ou null)
-
-    alt Utilisateur existe & mot de passe correct
-        C->>M: comparePassword(password)
-        M-->>C: true
-        C->>J: generateToken(user._id)
-        J-->>C: token
-        C-->>U: 200 OK (User Data + Token)
-    else Identifiants invalides
-        C-->>U: 401 Unauthorized (Invalid credentials)
-    end
-```
-
-### 1.3 Diagramme de classe (Modèle User)
-
-```mermaid
-classDiagram
-    class User {
-        +String firstName
-        +String lastName
-        +String email
-        +String password
-        +String role
-        +String avatar
-        +Boolean isActive
-        +String department
-        +String studentId
-        +String registrationNumber
-        +ObjectId classId
-        +String className
-        +String teacherId
-        +Date createdAt
-        +Date updatedAt
-        +comparePassword(candidatePassword)
-    }
-
-    note for User "Roles: ADMIN, STUDENT, TEACHER, PARTNER, CHEF_DEPT"
-```
+Ce document décrit le design du système pour chaque sprint, en détaillant les cas d'utilisation, les processus (séquences) et la structure des données (classes) sous forme de paragraphes descriptifs.
 
 ---
 
-## Sprint 2 : Gestion des emplois du temps
+## Sprint 1 : Gestion des Utilisateurs
 
-### 2.1 Diagramme des cas d'utilisation
+### 1.1 Diagramme des Cas d'Utilisation (Description)
+Le système d'utilisateurs repose sur quatre acteurs principaux : l'Étudiant, l'Enseignant, le Chef de Département et l'Administrateur. L'Étudiant peut s'inscrire sur la plateforme, se connecter et consulter ses informations personnelles via son profil. L'Enseignant hérite des fonctionnalités de l'étudiant et possède en plus le droit de lister les étudiants pour ses besoins pédagogiques. Le Chef de Département, en tant que gestionnaire, a la responsabilité de gérer l'ensemble des utilisateurs de son département (ajout, modification, suppression). Enfin, l'Administrateur est le super-utilisateur ayant un accès global à la gestion de tous les comptes du système.
 
-```mermaid
-graph TD
-    Student[Étudiant]
-    Teacher[Enseignant]
-    Chef[Chef de Département]
+### 1.2 Processus d'Authentification (Séquence)
+Lorsqu'un utilisateur tente de se connecter, il envoie ses identifiants (email et mot de passe) via l'interface. Le contrôleur d'authentification reçoit cette demande et interroge la base de données pour trouver l'utilisateur correspondant à l'email fourni. Si l'utilisateur est trouvé, le système compare le mot de passe saisi avec la version hachée stockée en base. Si la vérification réussit, un jeton de sécurité (JWT) est généré et renvoyé à l'utilisateur avec ses informations de profil. En cas d'échec (email inexistant ou mot de passe incorrect), le système renvoie une erreur d'authentification sécurisée.
 
-    subgraph "Consultation"
-        UC1(Consulter son emploi du temps)
-        UC2(Consulter les cours enseignés)
-        UC3(Consulter les salles)
-    end
-
-    subgraph "Gestion Académique"
-        UC4(Gérer les séances - CRUD)
-        UC5(Gérer les cours - Modules)
-        UC6(Affecter Enseignant/Salle)
-    end
-
-    Student --> UC1
-    Teacher --> UC1
-    Teacher --> UC2
-
-    Chef --> Teacher
-    Chef --> UC3
-    Chef --> UC4
-    Chef --> UC5
-    Chef --> UC6
-```
-
-### 2.2 Diagramme de séquence (Consultation Emploi du Temps Étudiant)
-
-```mermaid
-sequenceDiagram
-    participant S as Étudiant
-    participant R as Router (academicRoutes)
-    participant C as AcademicController
-    participant D as Dept Model
-    participant M as Session Model
-
-    S->>R: GET /api/academic/schedule/student
-    R->>C: getStudentSchedule(req, res)
-    C->>D: findOne({ 'classes._id': req.user.classId })
-    D-->>C: dept & classObj
-    C->>M: find({ classId: queryId }).sort({ dayOfWeek, timeSlot })
-    M-->>C: sessions[]
-    C-->>S: 200 OK (sessions[])
-```
-
-### 2.3 Diagramme de classe (Gestion Académique)
-
-```mermaid
-classDiagram
-    class Department {
-        +String name
-        +String head
-        +String headEmail
-        +Teacher[] teachers
-        +Class[] classes
-    }
-
-    class Course {
-        +String name
-        +String code
-        +Number semester
-        +Number level
-        +Object hours
-        +ObjectId department
-    }
-
-    class Session {
-        +ObjectId course
-        +String courseName
-        +Object teacher
-        +Object room
-        +Mixed classId
-        +String className
-        +String type
-        +Number dayOfWeek
-        +Number timeSlot
-    }
-
-    class Room {
-        +String name
-        +String building
-        +Number capacity
-        +String type
-    }
-
-    Department "1" -- "*" Course : contient
-    Department "1" -- "*" Session : gère
-    Course "1" -- "*" Session : instancie
-    Room "1" -- "*" Session : accueille
-```
+### 1.3 Structure des Données Utilisateurs (Classe)
+L'entité "Utilisateur" est le pilier du système. Elle stocke les informations d'identité (nom, prénom, email, mot de passe haché) et définit le rôle de l'individu (ADMIN, STUDENT, TEACHER, etc.). Pour les étudiants, des champs spécifiques comme le numéro d'inscription, l'identifiant étudiant et le lien vers une classe (classId) sont utilisés. Le modèle gère également l'état du compte (actif ou non) et enregistre automatiquement les dates de création et de mise à jour de chaque profil.
 
 ---
 
-## Sprint 3 : Gestion des absences
+## Sprint 2 : Gestion des Emplois du Temps
 
-### 3.1 Diagramme des cas d'utilisation
+### 2.1 Diagramme des Cas d'Utilisation (Description)
+La gestion des emplois du temps implique l'Étudiant, l'Enseignant et le Chef de Département. L'Étudiant et l'Enseignant peuvent consulter leur planning hebdomadaire respectif. L'Enseignant a également accès à la liste des cours qu'il dispense. Le Chef de Département possède les droits d'administration académique : il peut créer et modifier les modules de cours, gérer les salles de classe disponibles et organiser les séances en affectant un enseignant, une classe et une salle à un créneau horaire précis.
 
-```mermaid
-graph TD
-    Student[Étudiant]
-    Teacher[Enseignant]
-    Chef[Chef de Département]
+### 2.2 Consultation de l'Emploi du Temps (Séquence)
+Lorsqu'un étudiant souhaite voir son planning, le système identifie d'abord la classe à laquelle il appartient via son profil. Il recherche ensuite dans la base de données du département la correspondance entre cette classe et son identifiant externe (issu du système de planification). Une fois la classe localisée, le contrôleur récupère toutes les séances programmées pour cette classe, les trie par jour de la semaine et par créneau horaire (slot), puis les transmet à l'interface de l'étudiant pour affichage.
 
-    subgraph "Consultation Présence"
-        UC1(Consulter ses absences)
-        UC2(Consulter l'historique de présence)
-    end
-
-    subgraph "Saisie de Présence"
-        UC3(Marquer la présence - Individuel)
-        UC4(Marquer la présence - En masse)
-        UC5(Modifier/Supprimer une présence)
-    end
-
-    Student --> UC1
-    Teacher --> UC2
-    Teacher --> UC3
-    Teacher --> UC4
-    Teacher --> UC5
-
-    Chef --> Teacher
-```
-
-### 3.2 Diagramme de séquence (Marquage de présence en masse)
-
-```mermaid
-sequenceDiagram
-    participant T as Enseignant
-    participant R as Router (attendanceRoutes)
-    participant C as AttendanceController
-    participant M as Attendance Model
-
-    T->>R: POST /api/attendance/bulk (courseName, date, records[])
-    R->>C: markBulkAttendance(req, res)
-    Note over C: Map records to Attendance docs
-    C->>M: insertMany(docs)
-    M-->>C: createdDocs[]
-    C-->>T: 201 Created (count)
-```
-
-### 3.3 Diagramme de classe (Gestion des Absences)
-
-```mermaid
-classDiagram
-    class Attendance {
-        +ObjectId student
-        +ObjectId teacher
-        +String courseName
-        +Date date
-        +Number durationHours
-        +String status
-        +String sessionType
-        +String justification
-        +Boolean justified
-        +Date createdAt
-    }
-
-    class User {
-        <<Referenced>>
-    }
-
-    Attendance "*" -- "1" User : concerne (student)
-    Attendance "*" -- "1" User : marqué par (teacher)
-```
+### 2.3 Structure de la Gestion Académique (Classe)
+Le design repose sur quatre entités interconnectées. Le "Département" regroupe les enseignants et les classes. Le "Cours" (ou Module) définit le contenu pédagogique, le volume horaire et le niveau. La "Salle" caractérise les lieux de cours par leur bâtiment et leur capacité. Enfin, la "Séance" (Session) fait le lien entre ces éléments : elle associe un cours, un enseignant, une salle et une classe à un moment précis (jour et créneau), tout en précisant le type de session (Cours, TD ou TP).
 
 ---
 
-## Sprint 4 : Gestion des notes
+## Sprint 3 : Gestion des Absences
 
-### 4.1 Diagramme des cas d'utilisation
+### 3.1 Diagramme des Cas d'Utilisation (Description)
+Ce module permet le suivi de l'assiduité des étudiants. L'Étudiant peut consulter son historique d'absences pour vérifier son statut et éventuellement fournir des justifications. L'Enseignant est l'acteur principal de la saisie : il peut marquer la présence ou l'absence d'un étudiant individuellement ou effectuer une saisie en masse pour toute une classe lors d'une séance. Il a aussi le droit de modifier ou supprimer un enregistrement en cas d'erreur. Le Chef de Département supervise l'ensemble des données de présence de son département.
 
-```mermaid
-graph TD
-    Student[Étudiant]
-    Teacher[Enseignant]
-    Chef[Chef de Département]
+### 3.2 Marquage de Présence en Masse (Séquence)
+Pour gagner du temps, l'enseignant utilise la fonctionnalité de saisie groupée. Il sélectionne le cours, la date et la séance concernée. Le système lui présente la liste des étudiants inscrits dans cette classe. L'enseignant coche le statut de chaque étudiant (Présent par défaut, Absent, en Retard). Une fois validée, la liste est envoyée au serveur qui transforme chaque ligne en un document de présence individuel. Ces documents sont insérés simultanément dans la base de données, et un message de confirmation indiquant le nombre d'enregistrements créés est renvoyé à l'enseignant.
 
-    subgraph "Consultation Notes"
-        UC1(Consulter ses notes)
-        UC2(Consulter les notes attribuées)
-    end
-
-    subgraph "Saisie & Import"
-        UC3(Ajouter une note)
-        UC4(Importer des notes - Excel)
-        UC5(Supprimer une note)
-    end
-
-    subgraph "Réclamations"
-        UC6(Déposer une réclamation)
-        UC7(Traiter une réclamation)
-    end
-
-    Student --> UC1
-    Student --> UC6
-
-    Teacher --> UC2
-    Teacher --> UC3
-    Teacher --> UC4
-    Teacher --> UC5
-
-    Chef --> Teacher
-    Chef --> UC7
-```
-
-### 4.2 Diagramme de séquence (Import de notes via Excel)
-
-```mermaid
-sequenceDiagram
-    participant T as Enseignant
-    participant R as Router (gradeRoutes)
-    participant C as GradeController
-    participant X as XLSX Utility
-    participant U as User Model
-    participant G as Grade Model
-
-    T->>R: POST /api/grades/bulk-upload (file, meta-data)
-    R->>C: bulkUploadGrades(req, res)
-    C->>X: read(file.buffer)
-    X-->>C: rows[]
-    loop Chaque ligne
-        C->>U: findOne({ studentId: sid })
-        U-->>C: student
-        Note over C: Valider score & infos
-    end
-    C->>G: insertMany(gradesToCreate)
-    G-->>C: result
-    C-->>T: 201 Created (results)
-```
-
-### 4.3 Diagramme de classe (Gestion des Notes & Réclamations)
-
-```mermaid
-classDiagram
-    class Grade {
-        +ObjectId student
-        +ObjectId teacher
-        +String courseName
-        +String department
-        +String subject
-        +Number score
-        +Number coefficient
-        +String semester
-        +String type
-        +Date date
-    }
-
-    class Complaint {
-        +ObjectId student
-        +ObjectId grade
-        +String reason
-        +String status
-        +String response
-        +ObjectId resolvedBy
-        +Date resolvedAt
-    }
-
-    class User {
-        <<Referenced>>
-    }
-
-    Grade "*" -- "1" User : attribué à (student)
-    Grade "*" -- "1" User : donné par (teacher)
-    Complaint "*" -- "1" User : déposé par (student)
-    Complaint "*" -- "1" Grade : concerne
-    Complaint "*" -- "0..1" User : résolu par (Chef/Admin)
-```
+### 3.3 Structure des Données de Présence (Classe)
+L'entité "Présence" enregistre chaque événement d'assiduité. Elle contient les références vers l'étudiant concerné et l'enseignant qui a effectué l'appel. Elle précise le nom du cours, la date, la durée de la séance et le type (Cours, examen, etc.). Le statut (PRÉSENT, ABSENT, EN RETARD, EXCUSÉ) est l'information centrale. Le modèle prévoit également des champs pour la justification (texte) et un indicateur booléen précisant si l'absence a été validée comme justifiée par l'administration.
 
 ---
+
+## Sprint 4 : Gestion des Notes
+
+### 4.1 Diagramme des Cas d'Utilisation (Description)
+La gestion des notes ferme le cycle pédagogique. L'Étudiant consulte ses résultats par semestre et peut déposer une réclamation s'il constate une anomalie. L'Enseignant saisit les notes, soit une par une, soit en important un fichier Excel contenant les résultats de toute une classe. Il peut aussi supprimer une note erronée qu'il a précédemment attribuée. Le Chef de Département, en plus de consulter les notes, est responsable du traitement des réclamations déposées par les étudiants (acceptation ou rejet avec commentaire).
+
+### 4.2 Importation de Notes via Excel (Séquence)
+Le processus d'importation commence par le téléchargement d'un fichier Excel par l'enseignant, accompagné des métadonnées (nom du cours, semestre, type d'évaluation). Le serveur lit le fichier et extrait les données ligne par ligne. Pour chaque ligne, il vérifie si l'identifiant étudiant existe en base de données et si la note est valide (entre 0 et 20). Une fois toutes les lignes validées, le système crée massivement les entités "Note" correspondantes. Le résultat de l'opération, incluant le nombre de notes créées et les éventuelles erreurs rencontrées (étudiant inconnu, format incorrect), est renvoyé à l'enseignant.
+
+### 4.3 Structure des Notes et Réclamations (Classe)
+Deux entités gèrent ce module. La "Note" (Grade) stocke le résultat chiffré, le coefficient, le type d'examen (DS, Exam, TP) et les références de l'étudiant, de l'enseignant et du module. La "Réclamation" (Complaint) est liée à une note spécifique. Elle contient le motif rédigé par l'étudiant, le statut de la demande (En attente, Acceptée, Rejetée) et la réponse finale apportée par le Chef de Département, ainsi que la date et l'auteur de la résolution.
