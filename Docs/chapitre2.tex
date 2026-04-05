@@ -1,0 +1,90 @@
+\section{Introduction}
+Ce chapitre constitue la phase de transition entre la compréhension théorique du sujet et la réalisation technique. Il a pour objectif de définir avec précision le périmètre fonctionnel de l'application, d'identifier les acteurs impliqués et de modéliser leurs interactions. Nous y détaillerons également la méthodologie de gestion de projet adoptée, ainsi que les choix technologiques et architecturaux qui garantissent la robustesse et la scalabilité de notre solution.
+
+\section{Analyse et spécification des besoins}
+L'analyse des besoins est une étape cruciale permettant de traduire les attentes des utilisateurs en fonctionnalités techniques concrètes.
+
+\subsection{Besoins fonctionnels}
+Les besoins fonctionnels décrivent les actions que le système doit permettre de réaliser. Ils sont articulés autour de quatre profils principaux :
+\begin{itemize}
+    \item \textbf{Étudiant :} Consultation de l'emploi du temps, des notes et de l'assiduité ; dépôt de réclamations ; accès aux actualités, événements et offres de stages ; communication via un chat en temps réel.
+    \item \textbf{Enseignant :} Gestion des notes (saisie individuelle et import Excel), suivi de la présence (appel par classe), consultation de ses cours et interaction avec les étudiants.
+    \item \textbf{Chef de département :} Administration complète du département (gestion des enseignants, étudiants, classes et modules), planification des séances (emploi du temps), traitement des réclamations et publication de contenu (actualités, événements).
+    \item \textbf{Administrateur :} Supervision globale du système et gestion des comptes utilisateurs.
+\end{itemize}
+
+\subsection{Besoins non fonctionnels}
+Ces besoins garantissent la qualité et la pérennité de l'application :
+\begin{itemize}
+    \item \textbf{Sécurité :} Authentification sécurisée via JSON Web Tokens (JWT) et hachage des mots de passe avec Bcrypt.
+    \item \textbf{Performance et Réactivité :} Utilisation de Next.js pour le rendu côté client et de WebSockets (Socket.io) pour les communications instantanées.
+    \item \textbf{Ergonomie :} Interface intuitive et "Responsive Design" s'adaptant à tous les types de terminaux (PC, Tablettes, Smartphones).
+    \item \textbf{Disponibilité :} Le système doit être accessible en permanence avec une gestion robuste des erreurs.
+\end{itemize}
+
+\section{Identification et modélisation des cas d’utilisation}
+
+\subsection{Identification des acteurs}
+Nous distinguons deux types d'acteurs :
+\begin{itemize}
+    \item \textbf{Acteurs principaux :} L'Étudiant, l'Enseignant et le Chef de département qui interagissent directement avec les fonctionnalités métier.
+    \item \textbf{Acteur secondaire :} Le système de base de données (MongoDB) et le serveur d'authentification.
+\end{itemize}
+
+\subsection{Diagramme global des cas d’utilisation}
+Le diagramme global synthétise les droits d'accès. Par exemple, alors que tous les utilisateurs peuvent s'authentifier, seul le Chef de département possède l'extension "Gérer les emplois du temps", et seul l'Enseignant peut "Importer des notes".
+
+\section{Gestion et pilotage du projet selon Scrum}
+Pour assurer une livraison itérative et flexible, nous avons adopté la méthodologie Agile Scrum.
+
+\subsection{Product Backlog}
+Le Product Backlog contient l'ensemble des User Stories classées par priorité :
+1. Authentification et gestion des profils.
+2. Gestion académique (Classes, Cours, Emplois du temps).
+3. Gestion des notes et de la présence.
+4. Module de communication (Chat et Actualités).
+
+\subsection{Planification des sprints}
+Le projet a été découpé en cycles de développement structurés :
+\begin{itemize}
+    \item \textbf{Sprint 1 :} Mise en place de l'architecture backend et module d'authentification.
+    \item \textbf{Sprint 2 :} Développement du cœur métier (Notes, Présence, Emploi du temps).
+    \item \textbf{Sprint 3 :} Intégration du chat temps réel et finalisation de l'interface utilisateur.
+\end{itemize}
+
+\section{Environnement de travail}
+
+\subsection{Environnement matériel}
+Le développement a été réalisé sur une station de travail moderne équipée d'un processeur multi-cœur et de 16 Go de RAM, nécessaire pour l'exécution simultanée des environnements de développement.
+
+\subsection{Environnement logiciel et technologique}
+\begin{itemize}
+    \item \textbf{Backend :} Node.js avec le framework Express.
+    \item \textbf{Frontend :} React.js au sein du framework Next.js.
+    \item \textbf{Base de données :} MongoDB (NoSQL) avec l'ORM Mongoose.
+    \item \textbf{Outils :} VS Code (IDE), Git (Versionnage), Postman (Test API).
+\end{itemize}
+
+\subsection{Langage de modélisation}
+Nous avons utilisé le langage \textbf{UML (Unified Modeling Language)} pour la conception technique des diagrammes de cas d'utilisation et de classes.
+
+\section{Architecture du système}
+
+\subsection{Présentation du modèle MVC}
+L'architecture repose sur le patron de conception MVC (Modèle-Vue-Contrôleur), qui permet une séparation claire entre les données, la logique métier et l'interface.
+
+\subsection{Composants du modèle MVC}
+\begin{itemize}
+    \item \textbf{Modèle :} Défini via Mongoose (ex: User.js, Grade.js), il gère la structure des données et les interactions avec MongoDB.
+    \item \textbf{Vue :} Réalisée avec Next.js, elle représente l'interface dynamique présentée à l'utilisateur.
+    \item \textbf{Contrôleur :} Les contrôleurs Express reçoivent les requêtes, traitent la logique et retournent la réponse appropriée.
+\end{itemize}
+
+\subsection{Apports du modèle MVC pour notre application}
+Cette séparation facilite la maintenance, permet un développement parallèle du front et du back, et améliore la testabilité de chaque module indépendamment.
+
+\section{Architecture logicielle de l’application}
+L'application suit une architecture de type \textbf{Client-Serveur} communiquant via une \textbf{API REST}. Le serveur backend est "stateless", utilisant les tokens JWT pour maintenir l'état de session, tandis que les WebSockets permettent une communication bidirectionnelle pour le module de chat.
+
+\section{Conclusion}
+La phase de préparation a permis de poser les bases solides du projet. En définissant les besoins et en choisissant une architecture robuste (MVC/MERN), nous avons minimisé les risques techniques et fonctionnels. Le chapitre suivant portera sur la conception détaillée et la mise en œuvre de ces solutions.
