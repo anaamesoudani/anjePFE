@@ -4,51 +4,72 @@ Ce document présente la vision globale du système à travers des diagrammes de
 
 ---
 
-## 1. Diagramme des Cas d'Utilisation Global
+## 1. Diagramme des Cas d'Utilisation Global (avec <<include>> et <<extend>>)
+
+Ce diagramme illustre les interactions entre les acteurs et les fonctionnalités du système, en précisant les relations de dépendance.
 
 ```mermaid
 graph TD
+    %% Acteurs
     Student[Étudiant]
     Teacher[Enseignant]
     Chef[Chef de Département]
     Admin[Administrateur]
 
-    subgraph "Module Utilisateurs"
-        UC_Auth(S'authentifier)
-        UC_Prof(Gérer son profil)
-        UC_UserM(Gérer les comptes utilisateurs)
-    end
+    %% Cas d'Utilisation - Auth & Profil
+    UC_Login(Se connecter)
+    UC_Register(S'inscrire)
+    UC_Profile(Gérer son profil)
 
-    subgraph "Module Académique"
-        UC_Sch(Consulter l'emploi du temps)
-        UC_Sess(Gérer les séances & cours)
-        UC_Dept(Gérer les départements & classes)
-    end
+    %% Cas d'Utilisation - Académique
+    UC_Schedule(Consulter l'emploi du temps)
+    UC_ManageAcad(Gérer Séances & Cours)
+    UC_Dept(Gérer Départements & Classes)
 
-    subgraph "Module Évaluation & Suivi"
-        UC_Att(Gérer la présence/absence)
-        UC_Grd(Gérer les notes)
-        UC_Cmp(Déposer/Traiter réclamations)
-    end
+    %% Cas d'Utilisation - Évaluation
+    UC_Attendance(Gérer la présence)
+    UC_Justify(Justifier une absence)
+    UC_Grades(Gérer les notes)
+    UC_Excel(Importer via Excel)
+    UC_Complaint(Déposer une réclamation)
+    UC_Resolve(Traiter les réclamations)
 
-    Student --> UC_Auth
-    Student --> UC_Prof
-    Student --> UC_Sch
-    Student --> UC_Att
-    Student --> UC_Grd
-    Student --> UC_Cmp
-
+    %% Relations d'Héritage d'Acteurs
     Teacher --> Student
-    Teacher --> UC_Att
-    Teacher --> UC_Grd
-
     Chef --> Teacher
-    Chef --> UC_Sess
-    Chef --> UC_Dept
-    Chef --> UC_Cmp
-    Chef --> UC_UserM
-
     Admin --> Chef
+
+    %% Relations de Cas d'Utilisation (Include / Extend)
+    UC_Profile -.->|"<<include>>"| UC_Login
+    UC_Schedule -.->|"<<include>>"| UC_Login
+    UC_Attendance -.->|"<<include>>"| UC_Login
+    UC_Grades -.->|"<<include>>"| UC_Login
+
+    UC_Justify -.->|"<<extend>>"| UC_Attendance
+    UC_Excel -.->|"<<extend>>"| UC_Grades
+    UC_Excel -.->|"<<extend>>"| UC_Attendance
+    UC_Complaint -.->|"<<extend>>"| UC_Grades
+
+    %% Affectations Acteurs -> UC
+    Student --> UC_Register
+    Student --> UC_Login
+    Student --> UC_Profile
+    Student --> UC_Schedule
+    Student --> UC_Complaint
+
+    Teacher --> UC_Attendance
+    Teacher --> UC_Grades
+
+    Chef --> UC_ManageAcad
+    Chef --> UC_Dept
+    Chef --> UC_Resolve
+
+    %% Notes explicatives
+    note_inc[<<include>> : Fonctionnalité obligatoire pour l'action]
+    note_ext[<<extend>> : Optionnel ou conditionnel]
+
+    style note_inc fill:#f9f,stroke:#333,stroke-dasharray: 5 5
+    style note_ext fill:#bbf,stroke:#333,stroke-dasharray: 5 5
 ```
 
 ---
